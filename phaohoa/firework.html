@@ -6,7 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fireworks</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+
+
     <style>
         body,
         html {
@@ -124,17 +126,17 @@
             ctx.textBaseline = "middle";
 
             var fontSize = canvas.width / 15;
-            ctx.font = fontSize + "px 'Source Sans Pro', sans-serif";
+            ctx.font = fontSize + "px 'Dancing Script', cursive";
 
+           
             var text = "Anh muốn nói là anh yêu em";
             var textWidth = ctx.measureText(text).width;
 
             while (textWidth > canvas.width - 40) {
                 fontSize -= 2;
-                ctx.font = fontSize + "px 'Source Sans Pro', sans-serif";
+                ctx.font = fontSize + "px 'Dancing Script', cursive";
                 textWidth = ctx.measureText(text).width;
             }
-
             ctx.fillStyle = `rgba(255, 255, 255, ${textOpacity})`;
             ctx.fillText(text, canvas.width / 2, canvas.height / 2);
             ctx.restore();
