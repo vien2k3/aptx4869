@@ -524,12 +524,13 @@
          <!-- External scripts are preserved but stored as non-executing template script elements.
               We use data-src and data-type to recreate them when opening. Order is important. -->
 
-        <script data-src="https://unpkg.co/gsap@3/dist/gsap.min.js" data-type="text/javascript" type="text/template"></script>
-        <script data-src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/MorphSVGPlugin3.min.js" data-type="text/javascript" type="text/template"></script>
-        <script data-src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/DrawSVGPlugin3.min.js" data-type="text/javascript" type="text/template"></script>
-        <script data-src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/MotionPathPlugin.min.js" data-type="text/javascript" type="text/template"></script>
-        <script data-src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/Physics2DPlugin3.min.js" data-type="text/javascript" type="text/template"></script>
-        <script data-src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/EasePack3.min.js" data-type="text/javascript" type="text/template"></script>
+        <!-- Load official GSAP core and attempt to load common plugins from unpkg (will be fetched and validated) -->
+        <script data-src="https://unpkg.com/gsap@3/dist/gsap.min.js" data-type="text/javascript" type="text/template"></script>
+        <script data-src="https://unpkg.com/gsap@3/dist/MotionPathPlugin.min.js" data-type="text/javascript" type="text/template"></script>
+        <script data-src="https://unpkg.com/gsap@3/dist/DrawSVGPlugin.min.js" data-type="text/javascript" type="text/template"></script>
+        <script data-src="https://unpkg.com/gsap@3/dist/MorphSVGPlugin.min.js" data-type="text/javascript" type="text/template"></script>
+        <script data-src="https://unpkg.com/gsap@3/dist/Physics2DPlugin.min.js" data-type="text/javascript" type="text/template"></script>
+        <script data-src="https://unpkg.com/gsap@3/dist/EasePack.min.js" data-type="text/javascript" type="text/template"></script>
         <script data-src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" data-type="module" type="text/template"></script>
 
         <!-- The big inline script from your original page (store as template) -->
