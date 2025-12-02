@@ -816,16 +816,44 @@
             });
 
             // Helper: load a single external script and return a Promise
-            function loadExternalScript(src, type = 'text/javascript') {
-                return new Promise((resolve, reject) => {
+            // We fetch first so we can detect HTML redirects (e.g. GSAP trial landing page)
+            // and avoid injecting non-JS into the document which would break the page.
+            async function loadExternalScript(src, type = 'text/javascript') {
+                try {
+                    // try to fetch the resource as text first
+                    const resp = await fetch(src, { cache: 'no-cache', mode: 'cors' });
+                    if (!resp.ok) throw new Error('Network response was not ok');
+                    const text = await resp.text();
+
+                    // simple heuristics to detect HTML/error pages
+                    const lowered = text.slice(0, 200).toLowerCase();
+                    if (lowered.indexOf('<!doctype') !== -1 || lowered.indexOf('<html') !== -1 || lowered.indexOf('oops!') !== -1 || lowered.indexOf('requires-membership') !== -1) {
+                        console.warn('Skipping script because fetched resource looks like HTML or a landing page:', src);
+                        return null; // resolve gracefully, don't throw
+                    }
+
+                    // inject the fetched JS as an inline script (preserves order)
                     const s = document.createElement('script');
-                    s.src = src;
                     if (type === 'module') s.type = 'module';
                     s.async = false;
-                    s.onload = () => resolve(s);
-                    s.onerror = () => reject(new Error('Failed to load ' + src));
+                    s.textContent = text;
                     document.body.appendChild(s);
-                });
+                    return s;
+                } catch (err) {
+                    // fetch failed (CORS or network). Fall back to adding a script tag with src.
+                    return new Promise((resolve) => {
+                        const s = document.createElement('script');
+                        s.src = src;
+                        if (type === 'module') s.type = 'module';
+                        s.async = false;
+                        s.onload = () => resolve(s);
+                        s.onerror = (e) => {
+                            console.warn('Failed to load external script (fallback) ', src, e);
+                            resolve(null);
+                        };
+                        document.body.appendChild(s);
+                    });
+                }
             }
 
             // Helper: execute inline script content
