@@ -83,7 +83,9 @@
             border-radius: 20px;
             transform-origin: left center;
             transform: rotateY(0deg) translateZ(0);
-            transition: transform 900ms cubic-bezier(.16,.84,.24,1), box-shadow 400ms;
+            /* slower + smoother transition */
+            transition: transform 2400ms cubic-bezier(.2,.8,.2,1), box-shadow 900ms;
+            will-change: transform, opacity;
             z-index: 70;
             display: block;
             pointer-events: auto;
@@ -149,7 +151,9 @@
             transform: rotateY(0deg);
             z-index: 50; /* lower than cover-front so button remains visible */
             pointer-events: none;
-            transition: transform 900ms cubic-bezier(.16,.84,.24,1), box-shadow 400ms;
+            /* slower + smoother transition */
+            transition: transform 2400ms cubic-bezier(.2,.8,.2,1), box-shadow 900ms;
+            will-change: transform, opacity;
         }
 
         .pages::before{
@@ -178,15 +182,61 @@
             box-shadow: 0 12px 36px rgba(0,0,0,0.26);
         }
 
+        /* Book-fold effect: staged opening for a nicer "gập sách" look */
+        /* initial staged class while animating */
+        .card.opening .card-cover{ transition-duration: 2400ms; }
+        .card.opening .pages{ transition-duration: 2400ms; }
+
+        /* folded appearance when fully open */
+        .card.open .pages{
+            transform: rotateY(-22deg) translateX(6%) skewY(-2deg);
+            box-shadow: 0 18px 48px rgba(0,0,0,0.32);
+        }
+
+        /* subtle tilt and depth for inner content to read as a page spread */
+        .card.open .card-inner{
+            transform: translateX(14%) rotateY(10deg) translateZ(8px) rotateZ(-1deg);
+            transition: transform 2400ms cubic-bezier(.2,.8,.2,1);
+            will-change: transform, opacity;
+        }
+
+        .card.open .card-inner > * {
+            transform: translateZ(10px);
+            transition: transform 2400ms cubic-bezier(.2,.8,.2,1);
+        }
+
+        /* folded edge visual using pages::after */
+        .pages::after{
+            content: "";
+            position: absolute;
+            right: -6%;
+            top: 6%;
+            bottom: 6%;
+            width: 36%;
+            border-radius: 0 8px 8px 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(255,255,255,0.04));
+            transform-origin: left center;
+            transform: translateX(8%) skewY(0deg) rotateY(0deg);
+            opacity: 0;
+            transition: transform 2400ms cubic-bezier(.2,.8,.2,1), opacity 1200ms ease;
+            pointer-events: none;
+            z-index: 55;
+        }
+
+        .card.open .pages::after{
+            opacity: 1;
+            transform: translateX(-6%) skewY(-6deg) rotateY(-12deg);
+        }
+
         .card.open .card-inner{
             transform: translateX(12%) rotateY(8deg) translateZ(0);
-            transition: transform 900ms cubic-bezier(.16,.84,.24,1);
+            transition: transform 2400ms cubic-bezier(.2,.8,.2,1);
         }
 
         /* small 3D lift for content when opened */
         .card.open .card-inner > * {
             transform: translateZ(6px);
-            transition: transform 900ms cubic-bezier(.16,.84,.24,1);
+            transition: transform 2400ms cubic-bezier(.2,.8,.2,1);
         }
 
         /* responsive: trên màn nhỏ chuyển thành cột, vẫn không cuộn */
@@ -302,6 +352,25 @@
             letter-spacing: 0.6px;
         }
 
+        /* subtitle under the main greeting: same font family, smaller size, centered */
+        .card-inner .subtext {
+            margin-top: 8px;
+            /* slightly larger and bolder for better readability */
+            font-size: clamp(14px, 2vw, 20px);
+            color: #2b1a12;
+            font-family: 'Ephesis', serif;
+            letter-spacing: 0.45px;
+            line-height: 1.25;
+            font-weight: 700;
+            text-shadow: 0 0.6px 0 rgba(0,0,0,0.06);
+            /* keep more breathing room on the right so text displays fully */
+            padding: 0 32px 0 8px;
+            max-width: calc(100% - 40px);
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+
         .card-inner .santa-claus {
             width: min(320px, 100%);
             height: auto;
@@ -309,11 +378,30 @@
 
         /* DEBUG: tạm ẩn bìa khi đã mở để chắc chắn nội dung hiển thị (bỏ/ghi chú khi xong) */
         /* .card.open .card-cover { display: none !important; } */
+
+        /* Snow canvas sits above the card and draws falling snowflakes */
+        #snowCanvas{
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 95; /* above most card elements but below UI overlays if any */
+        }
+
+        /* Mobile tweaks: reduce heavy shadows and ensure layout fits */
+        @media (max-width: 600px){
+            .card { padding: 16px; }
+            .open-btn{ padding: 10px 14px; font-size: 15px; }
+            .card-inner .subtext{ padding-right: 40px; }
+        }
     </style>
 </head>
 
 <body>
     <div class="card" role="group" aria-label="Greeting card">
+        <!-- canvas for snowfall effect -->
+        <canvas id="snowCanvas" aria-hidden="true"></canvas>
         <!-- cover nằm trên nội dung; có nút giữa cover -->
         <div class="card-cover" aria-hidden="true">
             <div class="cover-front">
@@ -428,8 +516,9 @@
         <!-- side panel: tiêu đề + ông già noel -->
         <div class="side" aria-hidden="false">
             <h1 class="text typewriter">Merry Christmas</h1>
+            <p class="text subtext">Chúc bạn một Giáng Sinh ấm áp, đầy niềm vui và những khoảnh khắc đáng nhớ bên người thân yêu.</p>
             <!-- dotlottie player (module) -->
-            <dotlottie-player class="santa-claus" src="https://lottie.host/6d0dfa5c-028c-4847-8389-06304eb1b01e/5TtJvD6xoM.json" background="transparent" speed="1" style="width: 300px; height: 300px;" loop autoplay></dotlottie-player>
+            <!-- Santa animation removed as requested -->
         </div>
 
          <!-- External scripts are preserved but stored as non-executing template script elements.
@@ -610,6 +699,122 @@
             let opened = false;
             let contentLoaded = false;
 
+            // Snowfall effect (canvas)
+            const snowCanvas = document.getElementById('snowCanvas');
+            let snowCtx = null;
+            let snowFlakes = [];
+            let snowAnimId = null;
+            let snowDpr = window.devicePixelRatio || 1;
+
+            // device / accessibility detection
+            const isNarrow = window.matchMedia('(max-width:600px)').matches;
+            const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            function createFlake(width, height) {
+                // adapt flake sizes / speed for narrow screens
+                const mobileFactor = isNarrow || isTouch ? 0.6 : 1;
+                // larger flakes more visible: many medium plus some large ones
+                const largeChance = Math.random();
+                const size = largeChance < 0.12 ? (6 * mobileFactor + Math.random() * 6 * mobileFactor) : (2 * mobileFactor + Math.random() * 4 * mobileFactor); // radius
+                return {
+                    x: Math.random() * width,
+                    y: Math.random() * -height,
+                    r: size,
+                    // slower vertical speed for gentle fall on desktop, even slower on mobile
+                    vy: (0.15 + Math.random() * 0.6) * (isNarrow ? 0.9 : 1),
+                    // gentler horizontal drift
+                    vx: (Math.random() - 0.5) * (isNarrow ? 0.25 : 0.3),
+                    swing: Math.random() * Math.PI * 2,
+                    // slower swing for smoother motion
+                    swingSpeed: (0.001 + Math.random() * 0.003) * (isNarrow ? 0.8 : 1),
+                    alpha: 0.65 + Math.random() * 0.35
+                };
+            }
+
+            function resizeSnow() {
+                if (!snowCanvas) return;
+                const rect = card.getBoundingClientRect();
+                snowDpr = window.devicePixelRatio || 1;
+                snowCanvas.width = Math.max(1, Math.floor(rect.width * snowDpr));
+                snowCanvas.height = Math.max(1, Math.floor(rect.height * snowDpr));
+                snowCanvas.style.width = rect.width + 'px';
+                snowCanvas.style.height = rect.height + 'px';
+                snowCtx = snowCanvas.getContext('2d');
+                snowCtx.setTransform(snowDpr, 0, 0, snowDpr, 0, 0);
+
+                // adjust number of flakes based on size and device
+                const areaFactor = Math.max(0.5, (rect.width * rect.height) / (800 * 600));
+                // reduce density on narrow/touch screens or when user prefers reduced motion
+                const base = prefersReducedMotion ? 0 : (isNarrow || isTouch ? 35 : 70);
+                const target = Math.round(base * areaFactor);
+                while (snowFlakes.length < target) snowFlakes.push(createFlake(rect.width, rect.height));
+                while (snowFlakes.length > target) snowFlakes.pop();
+            }
+
+            let lastSnowT = performance.now();
+            function animateSnow(now) {
+                if (!snowCtx) return;
+                const rect = card.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                const dt = Math.min(50, now - lastSnowT) / 16.6667; // normalize to ~60fps
+                lastSnowT = now;
+
+                snowCtx.clearRect(0, 0, width, height);
+                snowFlakes.forEach(f => {
+                    // slower per-frame advancement for a gentle fall
+                    f.swing += f.swingSpeed * dt * (isNarrow ? 6 : 10);
+                    f.x += f.vx * dt * (isNarrow ? 6 : 10) + Math.sin(f.swing) * (isNarrow ? 0.14 : 0.2);
+                    f.y += f.vy * dt * (isNarrow ? 6 : 10);
+                    if (f.y > height + 10) {
+                        // respawn at top
+                        f.x = Math.random() * width;
+                        f.y = -10 - Math.random() * 60;
+                        f.vy = (0.4 + Math.random() * 1.2) * (isNarrow ? 0.9 : 1);
+                    }
+
+                    // draw with subtle glow for larger, clearer flakes
+                    snowCtx.save();
+                    snowCtx.beginPath();
+                    snowCtx.fillStyle = 'rgba(255,255,255,' + (f.alpha) + ')';
+                    // reduce blur on narrow devices for performance
+                    if (f.r > 5 && !isNarrow) {
+                        snowCtx.shadowBlur = 8;
+                        snowCtx.shadowColor = 'rgba(255,255,255,0.9)';
+                    } else {
+                        snowCtx.shadowBlur = 1;
+                        snowCtx.shadowColor = 'rgba(255,255,255,0.6)';
+                    }
+                    snowCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+                    snowCtx.fill();
+                    snowCtx.restore();
+                });
+
+                snowAnimId = requestAnimationFrame(animateSnow);
+            }
+
+            function startSnow() {
+                if (!snowCanvas) return;
+                // do not start snow if user prefers reduced motion
+                if (prefersReducedMotion) return;
+                resizeSnow();
+                lastSnowT = performance.now();
+                if (!snowAnimId) snowAnimId = requestAnimationFrame(animateSnow);
+            }
+
+            function stopSnow() {
+                if (snowAnimId) cancelAnimationFrame(snowAnimId);
+                snowAnimId = null;
+            }
+
+            window.addEventListener('resize', () => {
+                resizeSnow();
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) stopSnow(); else startSnow();
+            });
+
             // Helper: load a single external script and return a Promise
             function loadExternalScript(src, type = 'text/javascript') {
                 return new Promise((resolve, reject) => {
@@ -678,13 +883,63 @@
                 contentLoaded = true;
             }
 
-            // Open/close card function
+            // Open/close card function with staged classes for book-fold effect
+            var openTl = null;
+
+            function createOpenTimeline() {
+                if (prefersReducedMotion) return null;
+                if (!window.gsap) return null;
+                // create a timeline that emulates a slow page-turn
+                var tl = gsap.timeline({ paused: true });
+
+                // ensure 3D rendering
+                gsap.set(['.card-cover', '.pages', '.card-inner'], { transformStyle: 'preserve-3d', force3D: true });
+
+                // big page flip: adapt duration/intensity for narrow screens
+                const mainDur = isNarrow ? 1.2 : 1.8;
+                const settleDur = isNarrow ? 0.45 : 0.8;
+                const pageRotation = isNarrow ? -140 : -160;
+                tl.to('.pages', { duration: mainDur, rotationY: pageRotation, transformOrigin: 'left center', ease: 'power2.inOut' }, 0)
+                    .to('.card-cover', { duration: mainDur, rotationY: -180, transformOrigin: 'left center', ease: 'power2.inOut' }, 0)
+                    .to('.card-inner', { duration: mainDur, rotationY: isNarrow ? 6 : 10, x: isNarrow ? '8%' : '12%', z: isNarrow ? 4 : 8, ease: 'power2.out' }, 0.03)
+                    // settle back the pages to a readable lean
+                    .to('.pages', { duration: settleDur, rotationY: -12, ease: 'elastic.out(1, 0.6)' }, '>-0.15');
+
+                return tl;
+            }
+
+            // Open/close card function with GSAP timeline when available
             function toggleCard(open) {
+                // create timeline on demand after content scripts are loaded
+                if (!openTl && typeof window.gsap !== 'undefined') {
+                    openTl = createOpenTimeline();
+                }
+
                 if (open) {
-                    card.classList.add('open');
+                    if (openTl) {
+                        // play GSAP timeline
+                        card.classList.add('opening');
+                        openTl.play(0);
+                        // ensure final state class for non-GSAP CSS rules
+                        setTimeout(() => card.classList.add('open'), 2200);
+                    } else {
+                        // CSS fallback
+                        card.classList.add('opening');
+                        requestAnimationFrame(() => card.classList.add('open'));
+                    }
                     audio.play().catch(e => {});
                 } else {
-                    card.classList.remove('open');
+                    if (openTl) {
+                        // reverse timeline for smooth close
+                        openTl.reverse();
+                        // remove 'open' class immediately so CSS reverses too
+                        card.classList.remove('open');
+                        // remove opening marker after timeline reverse duration
+                        setTimeout(() => card.classList.remove('opening'), 2500);
+                    } else {
+                        card.classList.remove('open');
+                        setTimeout(() => card.classList.remove('opening'), 2500);
+                    }
                     audio.pause();
                     audio.currentTime = 0;
                 }
@@ -694,6 +949,8 @@
             // Initial setup: inject content and close card
             injectContentOnce().then(() => {
                 toggleCard(false);
+                // start snowfall after layout is ready
+                startSnow();
             });
 
             // Open button click handler
