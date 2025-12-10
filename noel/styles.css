@@ -354,11 +354,10 @@ body {
     line-height: 1.25;
     font-weight: 700;
     text-shadow: 0 0.6px 0 rgba(0,0,0,0.06);
-    /* keep more breathing room on the right so text displays fully */
-    padding: 0 32px 0 8px;
-    max-width: calc(100% - 40px);
-    margin-left: auto;
-    margin-right: auto;
+    /* symmetric padding for proper centering */
+    padding: 0 16px;
+    max-width: 100%;
+    margin: 0 auto;
     text-align: center;
 }
 
@@ -381,5 +380,6 @@ body {
 @media (max-width: 600px){
     .card { padding: 16px; }
     .open-btn{ padding: 10px 14px; font-size: 15px; }
-    .card-inner .subtext{ padding-right: 40px; }
+    .card-inner .mainSVG { width: 65%; }
+    .card-inner .subtext{ padding: 0 12px; }
 }
